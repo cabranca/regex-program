@@ -3,9 +3,8 @@
 #include <utility>
 
 enum : int { Split = 256, Match = 257 };
-State k_MatchState = { .symbol = Match, .out1 = nullptr, .out2 = nullptr, .lastList = 0 };
 
-State* post2nfa(char* postfix);
+State* post2nfa(char* postfix, State* matchState);
 
 
 void exprConcat(Expression e2, Expression e1, std::function<void(Expression s)> push);
@@ -24,11 +23,12 @@ void patch(const Ptrlist& l, State* s);
 List& startList(State* start, List& l, int& listId);
 void step(List& currentStates, int c, List& nextStates, int& listId);
 void addState(List& l, State* s, int listId);
-bool isMatch(const List& l);
+bool isMatch(const List& l, const State* matchState);
 
 
 Automata::Automata(char* postfix) {
-    m_StartState = post2nfa(postfix);
+    m_MatchState = { .symbol = Match, .out1 = nullptr, .out2 = nullptr, .lastList = 0 };
+    m_StartState = post2nfa(postfix, &m_MatchState);
 }
 
 bool Automata::match(char* s) {
@@ -39,10 +39,10 @@ bool Automata::match(char* s) {
         std::swap(currentStates, nextStates);
         s++;
     }
-    return isMatch(*currentStates);
+    return isMatch(*currentStates, &m_MatchState);
 }
 
-State* post2nfa(char* postfix) {
+State* post2nfa(char* postfix, State* matchState) {
     Expression stack[1000];
     Expression* stackPtr = stack;
 
@@ -81,7 +81,7 @@ State* post2nfa(char* postfix) {
     }
 
     Expression e = pop();
-    patch(e.out, &k_MatchState);
+    patch(e.out, matchState);
     return e.start;
 }
 
@@ -169,9 +169,9 @@ void addState(List& l, State* s, int listId) {
     l.states[l.size++] = s;
 }
 
-bool isMatch(const List& l) {
+bool isMatch(const List& l, const State* matchState) {
     for (int i = 0; i < l.size; i++) {
-        if (l.states[i] == &k_MatchState)
+        if (l.states[i] == matchState)
             return true;
     }
     return false;

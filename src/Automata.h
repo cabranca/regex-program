@@ -33,6 +33,10 @@ struct List {
 class Automata {
 public:
     explicit Automata(char* postfix);
+    Automata(const Automata&) = delete;
+    Automata& operator=(const Automata&) = delete;
+    Automata(Automata&&) = delete;
+    Automata& operator=(Automata&&) = delete;
 
     bool match(char* s);
 
@@ -40,6 +44,7 @@ private:
     static constexpr int kMaxStates = 1000;
 
     State* m_StartState = nullptr;
+    State m_MatchState{};
     int m_ListId = 0;
 
     State* m_List1Buffer[kMaxStates];
